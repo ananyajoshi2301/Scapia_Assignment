@@ -1,0 +1,397 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Tandem Trip Planner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: single column app, sticky step bar, cards only where an object is meant to be handled */
+:root{
+  --bg:#EEF2F1; --surface:#FFFFFF; --ink:#10242B; --muted:#5A6E74; --line:#D5DEDD;
+  --accent:#0B7A82; --accent-ink:#FFFFFF; --sun:#C9780A; --sun-bg:#FBEFD8;
+  --good:#1E7A4B; --warn:#B4531A; --bad:#B3261E;
+  --c1:#0B6E99; --c2:#B0457A; --c3:#6B7A0C; --c4:#B5560F; --c5:#6A4FBF;
+  --display:'Bricolage Grotesque',system-ui,sans-serif; --body:'Figtree',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0C1A1F; --surface:#13262D; --ink:#E6F0EF; --muted:#93A8AD; --line:#27404A;
+  --accent:#4CC3CB; --accent-ink:#06191C; --sun:#F0AE4A; --sun-bg:#33260F;
+  --good:#5CCB8F; --warn:#F09A62; --bad:#F2877F;
+  --c1:#5DB8E6; --c2:#E68AB8; --c3:#B6C74A; --c4:#EE9A58; --c5:#A894F0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C1A1F; --surface:#13262D; --ink:#E6F0EF; --muted:#93A8AD; --line:#27404A;
+  --accent:#4CC3CB; --accent-ink:#06191C; --sun:#F0AE4A; --sun-bg:#33260F;
+  --good:#5CCB8F; --warn:#F09A62; --bad:#F2877F;
+  --c1:#5DB8E6; --c2:#E68AB8; --c3:#B6C74A; --c4:#EE9A58; --c5:#A894F0; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 56px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.15}
+h1{font-size:28px;font-weight:700} h2{font-size:21px;font-weight:700} h3{font-size:16px;font-weight:600}
+p{margin:0}
+.muted{color:var(--muted)} .small{font-size:13px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+header{display:flex;flex-direction:column;gap:6px}
+.tag-sample{align-self:flex-start;font-size:12px;border:1px solid var(--line);border-radius:99px;padding:2px 10px;color:var(--muted)}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav button{font:inherit;font-weight:600;font-size:13px;padding:9px 4px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:8px;cursor:pointer;min-width:0}
+nav button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section.screen{display:flex;flex-direction:column;gap:16px}
+.lead{max-width:62ch;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;min-width:0}
+.grow{flex:1;min-width:0}
+.av{width:30px;height:30px;border-radius:50%;display:inline-grid;place-items:center;font-weight:600;font-size:13px;flex:none;
+  color:var(--cc);background:color-mix(in srgb,var(--cc) 16%,transparent);border:1.5px solid var(--cc)}
+.av.sm{width:24px;height:24px;font-size:11px}
+.av.solid{background:var(--cc);color:var(--surface)}
+.av.faint{opacity:.35}
+.av.ring{background:transparent}
+.avs{display:flex;gap:4px;flex-wrap:wrap}
+.chip{font:inherit;font-size:13px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:99px;padding:3px 11px;cursor:pointer}
+.chip[aria-pressed="true"]{background:color-mix(in srgb,var(--accent) 16%,transparent);border-color:var(--accent);color:var(--ink);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+select,input[type=text]{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);min-width:0;max-width:100%}
+.btn{font:inherit;font-weight:600;padding:9px 16px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.sm{padding:6px 12px;font-size:13px}
+.pace-label{font-weight:600;font-size:13px;min-width:70px;text-align:right}
+.summary{background:var(--sun-bg);border:1px solid color-mix(in srgb,var(--sun) 45%,transparent);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.summary b{font-family:var(--display);font-size:19px}
+.place{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:12px 0;border-top:1px solid var(--line)}
+.place:first-child{border-top:0;padding-top:0}
+.place .name{font-weight:600}
+.meta{font-size:13px;color:var(--muted)}
+.badge{font-size:11px;font-weight:600;border-radius:5px;padding:1px 7px;border:1px solid var(--line);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.badge.warn{color:var(--warn);border-color:var(--warn)} .badge.good{color:var(--good);border-color:var(--good)}
+.slot{display:flex;flex-direction:column;gap:8px;padding:14px 0;border-top:1px solid var(--line)}
+.slot:first-child{border-top:0;padding-top:0}
+.slot-time{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.track{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--line);border-radius:8px}
+.tracks{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}
+.track.split{border-style:dashed;border-color:var(--sun)}
+.days{display:flex;gap:6px}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--cc)}
+.fair{display:grid;grid-template-columns:auto 1fr auto;gap:6px 12px;align-items:center}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);align-items:center}
+.push{border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface));border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 6px 18px color-mix(in srgb,var(--ink) 12%,transparent)}
+.push .app{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);display:flex;justify-content:space-between}
+.near{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:12px 0;border-top:1px solid var(--line)}
+.near.closed{opacity:.55}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;min-width:0}
+.pcard{display:flex;flex-direction:column;gap:10px;padding:14px 0;border-top:1px solid var(--line)}
+.pcard:first-child{border-top:0;padding-top:0}
+.toast{font-size:13px;color:var(--good);min-height:20px}
+.foot{font-size:12px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.push{animation:pop .35s ease-out}@keyframes pop{from{transform:translateY(6px);opacity:.4}to{transform:none;opacity:1}}}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Goa · 3 nights · Airbnb in Vagator</span>
+    <h1>Tandem Trip Planner</h1>
+    <p class="lead">Saving a reel to a map is solved. Five people saving into one shared map is not: nobody decides whose spots win. This prototype adds that decision. It pools everyone's saves, shares out the good slots fairly, and nudges the group when a saved spot is nearby.</p>
+    <span class="tag-sample">Prototype with sample group and sample reels</span>
+  </header>
+
+  <nav role="tablist" aria-label="Prototype steps">
+    <button role="tab" id="t0" aria-selected="true">1 · Group</button>
+    <button role="tab" id="t1" aria-selected="false">2 · Reels</button>
+    <button role="tab" id="t2" aria-selected="false">3 · Plan</button>
+    <button role="tab" id="t3" aria-selected="false">4 · On the go</button>
+  </nav>
+
+  <section class="screen" id="s0"></section>
+  <section class="screen" id="s1" hidden></section>
+  <section class="screen" id="s2" hidden></section>
+  <section class="screen" id="s3" hidden></section>
+
+  <p class="foot">Distances are straight-line estimates between real Goa locations. Ranking is a simple scoring rule in this prototype, not a trained model. Pasting a reel adds the next sample reel, since the prototype does not read Instagram.</p>
+</div>
+
+<script>
+const CATS={fort:'Fort',beach:'Beach',food:'Food',nightlife:'Nightlife',market:'Market',culture:'Heritage',offbeat:'Offbeat',activity:'Activity'};
+const BASE={lat:15.6020,lng:73.7350,name:'Airbnb, Vagator'};
+const people=[
+ {id:'a',n:'Aarav',role:'Organiser',pace:.8,likes:['fort','beach','activity'],c:'--c1'},
+ {id:'m',n:'Meera',role:'',pace:.2,likes:['beach','culture','food'],c:'--c2'},
+ {id:'k',n:'Kabir',role:'',pace:.6,likes:['nightlife','offbeat','beach'],c:'--c3'},
+ {id:'i',n:'Isha',role:'',pace:.4,likes:['food','market','culture'],c:'--c4'},
+ {id:'r',n:'Rohan',role:'',pace:1,likes:['fort','activity'],c:'--c5'}
+];
+const byId=id=>people.find(p=>p.id===id);
+const places=[
+ {id:1,n:'Chapora Fort',area:'Vagator',lat:15.6055,lng:73.7370,cat:'fort',slots:['morning','afternoon'],dur:1.5,closes:18,saved:['a','r'],h:'@goa.golden.hour'},
+ {id:2,n:'Vagator Beach',area:'Vagator',lat:15.6000,lng:73.7330,cat:'beach',slots:['morning','afternoon','sunset'],dur:2,closes:24,saved:['m','k'],h:'@slowtravel.in'},
+ {id:3,n:'Thalassa',area:'Small Vagator',lat:15.6020,lng:73.7400,cat:'food',slots:['sunset','night'],dur:2,closes:23,saved:['m','i'],h:'@eatgoa.daily'},
+ {id:4,n:'Anjuna Flea Market',area:'Anjuna',lat:15.5760,lng:73.7420,cat:'market',slots:['afternoon','sunset'],dur:2,closes:19,saved:['i'],h:'@thriftwithisha'},
+ {id:5,n:"Curlie's Anjuna",area:'Anjuna',lat:15.5742,lng:73.7396,cat:'nightlife',slots:['sunset','night'],dur:3,closes:26,saved:['k'],h:'@nightsofgoa'},
+ {id:6,n:'Hilltop Vagator',area:'Vagator',lat:15.6039,lng:73.7392,cat:'nightlife',slots:['night'],dur:3,closes:26,saved:['k'],h:'@psy.trance.goa'},
+ {id:7,n:'Aguada Fort',area:'Candolim',lat:15.4925,lng:73.7737,cat:'fort',slots:['morning','afternoon'],dur:1.5,closes:18,saved:['r'],h:'@forts.of.india'},
+ {id:8,n:'Baga water sports',area:'Baga',lat:15.5553,lng:73.7517,cat:'activity',slots:['morning','afternoon'],dur:2.5,closes:17.5,saved:['r','a'],h:'@goa.adventure'},
+ {id:9,n:"Britto's",area:'Baga',lat:15.5560,lng:73.7510,cat:'food',slots:['afternoon','sunset','night'],dur:1.5,closes:23.5,saved:['i','a'],h:'@fishcurryrice'},
+ {id:10,n:'Fontainhas Latin Quarter',area:'Panjim',lat:15.4963,lng:73.8340,cat:'culture',slots:['morning','afternoon'],dur:2,closes:18.5,saved:['m','i'],h:'@old.goa.walks'},
+ {id:11,n:"Mum's Kitchen",area:'Panjim',lat:15.4989,lng:73.8280,cat:'food',slots:['afternoon','night'],dur:1.5,closes:23,saved:['i'],h:'@goan.on.a.plate'},
+ {id:12,n:'Ashwem Beach',area:'Ashwem',lat:15.6567,lng:73.7340,cat:'beach',slots:['morning','afternoon','sunset'],dur:2.5,closes:24,saved:['m'],h:'@barefoot.goa'},
+ {id:13,n:'Sweet Water Lake',area:'Arambol',lat:15.6866,lng:73.7040,cat:'offbeat',slots:['morning','afternoon'],dur:2.5,closes:18,saved:['k'],h:'@offbeat.goa'}
+];
+const reserve=[
+ {id:14,n:'Ozran Beach',area:'Vagator',lat:15.6049,lng:73.7366,cat:'beach',slots:['morning','sunset'],dur:1.5,closes:24,saved:[],h:'@hidden.vagator'},
+ {id:15,n:'Reis Magos Fort',area:'Verem',lat:15.5113,lng:73.8077,cat:'fort',slots:['morning','afternoon'],dur:1.5,closes:17.5,saved:[],h:'@goa.heritage'},
+ {id:16,n:'Vinayak Family Restaurant',area:'Assagao',lat:15.5961,lng:73.7632,cat:'food',slots:['afternoon','night'],dur:1.5,closes:22.5,saved:[],h:'@localgoa.eats'},
+ {id:17,n:'Mandrem Sunset Deck',area:'Mandrem',lat:15.6700,lng:73.7330,cat:'beach',slots:['sunset'],dur:2,closes:24,saved:[],h:'@chill.coast'}
+];
+const S={vault:'all',done:new Set(),tab:0,split:true,day:0,loc:'vagator',hour:16.5,radius:5,with:new Set(['a','m','k','i','r']),dismissed:new Set(),added:new Set(),toast:''};
+const LOCS={vagator:{n:'Vagator',lat:15.6020,lng:73.7350},anjuna:{n:'Anjuna',lat:15.5740,lng:73.7400},baga:{n:'Baga',lat:15.5553,lng:73.7517},panjim:{n:'Panjim',lat:15.4990,lng:73.8270},ashwem:{n:'Ashwem',lat:15.6567,lng:73.7340}};
+const SLOTLBL={morning:'Morning · 9:30',afternoon:'Afternoon · 1:00',sunset:'Sunset · 4:30',night:'Night · 8:30'};
+
+const km=(a,b)=>{const R=6371,t=x=>x*Math.PI/180,dl=t(b.lat-a.lat),dg=t(b.lng-a.lng);
+  const h=Math.sin(dl/2)**2+Math.cos(t(a.lat))*Math.cos(t(b.lat))*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(h));};
+const aff=(p,pl)=>pl.saved.includes(p.id)?3:(p.likes.includes(pl.cat)?1:0);
+const paceWord=v=>v<.34?'Chill':v<.67?'Balanced':'Packed';
+const comfort=p=>p.pace<.34?2:p.pace<.67?3:4;
+const meanPace=()=>people.reduce((a,p)=>a+p.pace,0)/people.length;
+const nSlots=()=>{const m=meanPace();return m<.34?2:m<.67?3:4};
+const SEQ={2:['afternoon','sunset'],3:['afternoon','sunset','night'],4:['morning','afternoon','sunset','night']};
+const fmt=h=>{h=((h%24)+24)%24;const hh=Math.floor(h),mm=Math.round((h-hh)*60);const x=hh%12||12;return x+':'+String(mm).padStart(2,'0')+(hh<12?' am':' pm')};
+const av=(p,cls='')=>`<span class="av ${cls}" style="--cc:var(${p.c})" title="${p.n}">${p.n[0]}</span>`;
+
+function buildPlan(){
+  const used=new Set(),wins={};people.forEach(p=>wins[p.id]=0);
+  const days=[],seq=SEQ[nSlots()];
+  for(let d=0;d<3;d++){
+    let prev=BASE;const slots=[];
+    for(let si=0;si<seq.length;si++){
+      const s=seq[si];let best=null;
+      for(const pl of places){
+        if(used.has(pl.id)||!pl.slots.includes(s))continue;
+        const sc=people.reduce((a,p)=>a+aff(p,pl)/(1+wins[p.id]*.8),0)-.07*km(prev,pl);
+        if(!best||sc>best.sc)best={pl,sc};
+      }
+      if(!best)continue;
+      const main=best.pl;used.add(main.id);
+      people.forEach(p=>{if(aff(p,main)>0)wins[p.id]++});
+      const slot={s,si,main,alt:null,altGo:[]};
+      if(S.split){
+        const left=people.filter(p=>aff(p,main)===0);
+        if(left.length>=2){
+          let b2=null;
+          for(const pl of places){
+            if(used.has(pl.id)||!pl.slots.includes(s)||km(main,pl)>10)continue;
+            const sum=left.reduce((a,p)=>a+aff(p,pl),0);
+            const sc=sum-.12*km(main,pl);
+            if(sum>=3&&(!b2||sc>b2.sc))b2={pl,sc};
+          }
+          if(b2){
+            const go=left.filter(p=>aff(p,b2.pl)>0);
+            if(go.length>=2){used.add(b2.pl.id);slot.alt=b2.pl;slot.altGo=go.map(p=>p.id);go.forEach(p=>wins[p.id]++);}
+          }
+        }
+      }
+      prev=main;slots.push(slot);
+    }
+    days.push(slots);
+  }
+  return days;
+}
+function fairness(days){
+  return people.map(p=>{
+    let att=0,liked=0;const inPlan=new Set();
+    days.flat().forEach(sl=>{
+      const goAlt=sl.alt&&sl.altGo.includes(p.id);
+      const pl=goAlt?sl.alt:sl.main;att++;
+      if(aff(p,pl)>0)liked++;
+      [sl.main,sl.alt].filter(Boolean).forEach(x=>{if(x.saved.includes(p.id))inPlan.add(x.id)});
+    });
+    const saved=places.filter(x=>x.saved.includes(p.id)).length;
+    return {p,att,liked,reels:inPlan.size,saved};
+  });
+}
+
+/* ---------- screens ---------- */
+function renderGroup(){
+  const m=meanPace(),n=nSlots();
+  const el=document.getElementById('s0');
+  el.innerHTML=`
+  <div><h2>Who is going, and how each person travels</h2>
+  <p class="lead">Set each person's pace and taste once. This is the input a shared itinerary or a poll never collects.</p></div>
+  <div class="card">${people.map(p=>`
+    <div class="pcard">
+      <div class="row">${av(p)}<div class="grow"><b>${p.n}</b> <span class="muted small">${p.role}</span></div>
+        <span class="pace-label" id="pl-${p.id}" style="color:var(${p.c})">${paceWord(p.pace)}</span></div>
+      <input type="range" min="0" max="1" step="0.05" value="${p.pace}" data-pace="${p.id}" aria-label="${p.n} pace">
+      <div class="chips" role="group" aria-label="${p.n} tastes">${Object.keys(CATS).map(c=>`<button class="chip" data-like="${p.id}:${c}" aria-pressed="${p.likes.includes(c)}">${CATS[c]}</button>`).join('')}</div>
+    </div>`).join('')}
+  </div>
+  <div class="summary"><span class="eyebrow">What the group pace means</span>
+    <b>${n} stops a day</b>
+    <span class="small">Average pace is ${paceWord(m).toLowerCase()}. ${people.filter(p=>comfort(p)<n).map(p=>p.n).join(' and ')||'Nobody'} would be comfortable with fewer, so the plan marks the last stop of the day as skippable for them.</span></div>
+  <div class="row"><button class="btn" data-go="1">Next: add saved reels</button></div>`;
+}
+function renderReels(){
+  const el=document.getElementById('s1');
+  el.innerHTML=`
+  <div><h2>Everyone's saved reels in one pool</h2>
+  <p class="lead">Each person links their Instagram saves. Places are matched to a location, so the pool already knows what sits near the Vagator Airbnb.</p></div>
+  <div class="card">
+    <div class="row">
+      <label class="f grow">Paste a reel link<input type="text" id="reelurl" placeholder="instagram.com/reel/…"></label>
+      <label class="f">Saved by<select id="reelby">${people.map(p=>`<option value="${p.id}">${p.n}</option>`).join('')}</select></label>
+      <button class="btn" id="reelgo" style="align-self:flex-end">Import</button>
+    </div>
+    <p class="toast" id="reeltoast" role="status">${S.toast}</p>
+  </div>
+  <div class="card">
+    <div class="eyebrow">Vaults</div>
+    <div class="chips" role="group" aria-label="Filter the pool">
+      <button class="chip" data-vault="all" aria-pressed="${S.vault==='all'}">All saves</button>
+      <button class="chip" data-vault="near" aria-pressed="${S.vault==='near'}">Within 8 km of Airbnb</button>
+      <button class="chip" data-vault="shared" aria-pressed="${S.vault==='shared'}">Saved by 2 or more</button>
+      ${people.map(p=>`<button class="chip" data-vault="${p.id}" aria-pressed="${S.vault===p.id}">${p.n}'s saves</button>`).join('')}
+    </div>
+    ${poolMap(vaultList())}
+    <p class="small muted">Pins are coloured by the first person who saved the place. A ring means more than one person saved it. The square is the Airbnb.</p>
+  </div>
+  <div class="card">
+    <div class="eyebrow">${vaultList().length} of ${places.length} places shown</div>
+    ${vaultList().sort((a,b)=>km(BASE,a)-km(BASE,b)).map(pl=>`
+    <div class="place">
+      <div><div class="name">${pl.n}</div><div class="meta">${pl.area} · ${CATS[pl.cat]} · ${km(BASE,pl).toFixed(1)} km from Airbnb · ${pl.h}</div></div>
+      <div class="avs">${pl.saved.map(id=>av(byId(id),'sm')).join('')}</div>
+    </div>`).join('')}
+  </div>
+  <div class="row"><button class="btn" data-go="2">Next: build the plan</button></div>`;
+  document.getElementById('reelgo').onclick=()=>{
+    const url=document.getElementById('reelurl').value.trim();
+    if(!url){S.toast='Paste a reel link first.';renderReels();return}
+    if(!reserve.length){S.toast='No more sample reels to import.';renderReels();return}
+    const by=document.getElementById('reelby').value,pl=reserve.shift();pl.saved=[by];places.push(pl);
+    S.toast=`Place read from the caption: ${pl.n}, ${pl.area}. Added to ${byId(by).n}'s saves.`;renderReels();
+  };
+}
+function vaultList(){
+  const v=S.vault;
+  return places.filter(pl=>v==='all'||(v==='near'&&km(BASE,pl)<=8)||(v==='shared'&&pl.saved.length>=2)||pl.saved.includes(v));
+}
+function poolMap(list){
+  const W=320,H=250,la0=15.47,la1=15.71,ln0=73.68,ln1=73.86;
+  const X=g=>8+(g.lng-ln0)/(ln1-ln0)*(W-16),Y=g=>8+(la1-g.lat)/(la1-la0)*(H-16);
+  const pins=list.map(pl=>{const f=byId(pl.saved[0]),multi=pl.saved.length>1;
+    return `<g><title>${pl.n} · saved by ${pl.saved.map(i=>byId(i).n).join(', ')}</title>
+      ${multi?`<circle cx="${X(pl)}" cy="${Y(pl)}" r="9" fill="none" stroke="var(${f.c})" stroke-width="1.5"/>`:''}
+      <circle cx="${X(pl)}" cy="${Y(pl)}" r="5" fill="var(${f.c})"/></g>`}).join('');
+  const r8=8/111*(H-16)/(la1-la0);
+  return `<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:280px;max-width:520px;display:block" role="img" aria-label="Map of saved places around North Goa">
+    <rect x="0" y="0" width="${W}" height="${H}" rx="8" fill="color-mix(in srgb,var(--accent) 7%,var(--surface))" stroke="var(--line)"/>
+    <circle cx="${X(BASE)}" cy="${Y(BASE)}" r="${r8}" fill="none" stroke="var(--sun)" stroke-dasharray="4 3"/>
+    ${pins}
+    <rect x="${X(BASE)-4}" y="${Y(BASE)-4}" width="8" height="8" fill="var(--sun)" stroke="var(--surface)" stroke-width="1.5"/>
+    <text x="${X(BASE)+9}" y="${Y(BASE)-8}" font-size="9" fill="var(--ink)" font-family="Figtree,sans-serif">Airbnb</text>
+    <text x="${W-10}" y="${H-10}" font-size="9" text-anchor="end" fill="var(--muted)" font-family="Figtree,sans-serif">North Goa · dashed ring = 8 km</text>
+    <text x="14" y="20" font-size="10" fill="var(--muted)" font-family="Figtree,sans-serif">N ↑</text></svg></div>`;
+}
+function whoLine(pl){
+  return `<div class="avs">${people.map(p=>{const a=aff(p,pl);return av(p,'sm '+(a>=3?'solid':a===1?'ring':'faint'))}).join('')}</div>`;
+}
+function renderPlan(){
+  const days=buildPlan(),fr=fairness(days),el=document.getElementById('s2');
+  const d=days[S.day];
+  el.innerHTML=`
+  <div><h2>One plan that shares out the good slots</h2>
+  <p class="lead">Each slot goes to the place that adds most for the people who have had the fewest wins so far. Where two or more people would get nothing, the plan offers a short split.</p></div>
+  <div class="row"><div class="days" role="tablist">${days.map((_,i)=>`<button class="btn sm ${i===S.day?'':'ghost'}" data-day="${i}">Day ${i+1}</button>`).join('')}</div>
+    <label class="row small" style="margin-left:auto"><input type="checkbox" id="splitcb" ${S.split?'checked':''}> Allow short splits</label></div>
+  <div class="legend"><span><span class="av sm solid" style="--cc:var(--muted)">A</span> saved it</span><span><span class="av sm ring" style="--cc:var(--muted)">A</span> likes this kind of place</span><span><span class="av sm faint" style="--cc:var(--muted)">A</span> not their thing</span></div>
+  <div class="card">
+    ${d.map((sl,i)=>{
+      const prevPl=i?d[i-1].main:BASE,dist=km(prevPl,sl.main);
+      const skip=people.filter(p=>sl.si>=comfort(p));
+      const mainTrack=`<div class="track"><div class="row"><b class="grow">${sl.main.n}</b>${sl.alt?'<span class="badge">Group</span>':''}</div>
+        <div class="meta">${sl.main.area} · ${CATS[sl.main.cat]} · ${dist.toFixed(1)} km from ${i?'previous stop':'Airbnb'}</div>${whoLine(sl.main)}</div>`;
+      const altTrack=sl.alt?`<div class="track split"><div class="row"><b class="grow">${sl.alt.n}</b><span class="badge warn">Split · ${sl.altGo.map(id=>byId(id).n).join(' + ')}</span></div>
+        <div class="meta">${sl.alt.area} · ${CATS[sl.alt.cat]} · ${km(sl.main,sl.alt).toFixed(1)} km from the group stop, meet at the next stop</div>${whoLine(sl.alt)}</div>`:'';
+      return `<div class="slot"><div class="slot-time"><span>${SLOTLBL[sl.s]}</span>${skip.length?`<span>${skip.map(p=>p.n).join(', ')} can rest here</span>`:''}</div>
+        <div class="tracks">${mainTrack}${altTrack}</div></div>`}).join('')}
+  </div>
+  <div class="card">
+    <h3>Fairness across all 3 days</h3>
+    <div class="fair">${fr.map(f=>`${av(f.p,'sm')}<div><div class="bar" style="--cc:var(${f.p.c})"><i style="width:${Math.round(f.liked/f.att*100)}%"></i></div><div class="meta">${f.liked} of ${f.att} stops are their kind of thing · ${f.reels} of ${f.saved} saved reels in plan</div></div><b>${Math.round(f.liked/f.att*100)}%</b>`).join('')}</div>
+    <p class="small muted">Turn splits off to see the gap widen for the people with niche saves. Change pace or tastes on the Group tab to reshuffle.</p>
+  </div>
+  <div class="row"><button class="btn" data-go="3">Next: on the go</button></div>`;
+  document.getElementById('splitcb').onchange=e=>{S.split=e.target.checked;renderPlan()};
+}
+function renderGo(){
+  const el=document.getElementById('s3'),loc=LOCS[S.loc];
+  const pool=places.map(pl=>{
+    const dist=km(loc,pl),mins=Math.round(dist*1.4/25*60)+5;
+    const present=people.filter(p=>S.with.has(p.id));
+    const savers=pl.saved.filter(id=>S.with.has(id));
+    const arrive=S.hour+mins/60,open=arrive+Math.min(pl.dur,1)<=pl.closes;
+    const score=present.reduce((a,p)=>a+aff(p,pl),0)-.25*dist;
+    return {pl,dist,mins,savers,open,arrive,score};
+  }).filter(x=>x.dist<=S.radius&&x.savers.length&&!S.dismissed.has(x.pl.id)&&!S.added.has(x.pl.id)).sort((a,b)=>(b.open-a.open)||(b.score-a.score));
+  const top=pool.find(x=>x.open);
+  el.innerHTML=`
+  <div><h2>A saved reel is around the corner</h2>
+  <p class="lead">While the group moves around Goa, the app checks the pool against where you are, who is with you, and whether the place will still be open when you get there.</p></div>
+  <div class="card"><div class="two">
+    <label class="f">You are in<select id="locsel">${Object.keys(LOCS).map(k=>`<option value="${k}" ${k===S.loc?'selected':''}>${LOCS[k].n}</option>`).join('')}</select></label>
+    <label class="f">Time now<select id="hoursel">${[10,12,14,15.5,16.5,17.25,19,21].map(h=>`<option value="${h}" ${h===S.hour?'selected':''}>${fmt(h)}</option>`).join('')}</select></label>
+  </div>
+  <label class="f">Nudge radius: ${S.radius} km<input type="range" id="radius" min="1" max="15" step="1" value="${S.radius}"></label>
+  <div><div class="small" style="font-weight:600;margin-bottom:6px">Who is with you right now</div>
+  <div class="chips">${people.map(p=>`<button class="chip" data-with="${p.id}" aria-pressed="${S.with.has(p.id)}">${p.n}</button>`).join('')}</div></div></div>
+  ${top?`<div class="push" role="status"><div class="app"><span>Tandem · now</span><span>${fmt(S.hour)}</span></div>
+    <div><b style="font-family:var(--display);font-size:18px">${top.pl.n} is ${top.dist.toFixed(1)} km away</b>
+    <div class="small">${top.savers.map(id=>byId(id).n).join(' and ')} saved this${top.savers.length===S.with.size?'':', and they are with you'}. About ${top.mins} min by scooter, open until ${fmt(top.pl.closes)}.</div></div>
+    <div class="row"><button class="btn sm" data-add="${top.pl.id}">Add to today</button><button class="btn sm ghost" data-skip="${top.pl.id}">Not now</button></div></div>`
+   :`<div class="card"><p class="muted">Nothing saved by the people with you is open and within ${S.radius} km. Widen the radius or change who is with you.</p></div>`}
+  ${S.added.size?`<div class="summary"><span class="eyebrow">Added to today</span>${[...S.added].map(id=>{const pl=places.find(x=>x.id===id),dn=S.done.has(id);return `<div class="row"><span class="grow"><b style="font-family:var(--display);${dn?'text-decoration:line-through':''}">${pl.n}</b> <span class="small muted">for ${pl.saved.map(i=>byId(i).n).join(', ')}</span></span>${dn?'<span class="badge good">Visited</span>':`<button class="btn sm ghost" data-done="${id}">Mark visited</button>`}</div>`}).join('')}</div>`:''}
+  <div class="card"><div class="eyebrow">All nearby saved places</div>
+  ${pool.length?pool.map(x=>`<div class="near ${x.open?'':'closed'}"><div><div class="name" style="font-weight:600">${x.pl.n}</div>
+    <div class="meta">${x.dist.toFixed(1)} km · ${x.mins} min · ${CATS[x.pl.cat]} · closes ${fmt(x.pl.closes)}</div></div>
+    <div class="row" style="justify-content:flex-end"><div class="avs">${x.savers.map(id=>av(byId(id),'sm')).join('')}</div>${x.open?'':'<span class="badge warn">Closed by then</span>'}</div></div>`).join(''):'<p class="muted small">No saved places in range.</p>'}</div>`;
+}
+
+/* ---------- wiring ---------- */
+function show(i){
+  S.tab=i;
+  for(let k=0;k<4;k++){document.getElementById('s'+k).hidden=k!==i;document.getElementById('t'+k).setAttribute('aria-selected',k===i)}
+  [renderGroup,renderReels,renderPlan,renderGo][i]();window.scrollTo({top:0});
+}
+document.querySelectorAll('nav button').forEach((b,i)=>b.onclick=()=>show(i));
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button');if(!t)return;
+  if(t.dataset.go)show(+t.dataset.go);
+  else if(t.dataset.day!==undefined){S.day=+t.dataset.day;renderPlan()}
+  else if(t.dataset.like){const [id,c]=t.dataset.like.split(':'),p=byId(id),i=p.likes.indexOf(c);
+    if(i>=0)p.likes.splice(i,1);else p.likes.push(c);renderGroup()}
+  else if(t.dataset.with){const id=t.dataset.with;if(S.with.has(id)){if(S.with.size>1)S.with.delete(id)}else S.with.add(id);renderGo()}
+  else if(t.dataset.vault){S.vault=t.dataset.vault;renderReels()}
+  else if(t.dataset.done){S.done.add(+t.dataset.done);renderGo()}
+  else if(t.dataset.add){S.added.add(+t.dataset.add);renderGo()}
+  else if(t.dataset.skip){S.dismissed.add(+t.dataset.skip);renderGo()}
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset&&t.dataset.pace){const p=byId(t.dataset.pace);p.pace=+t.value;
+    document.getElementById('pl-'+p.id).textContent=paceWord(p.pace);}
+  else if(t.id==='radius'){S.radius=+t.value;renderGo()}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset&&t.dataset.pace)renderGroup();
+  else if(t.id==='locsel'){S.loc=t.value;renderGo()}
+  else if(t.id==='hoursel'){S.hour=+t.value;renderGo()}
+});
+show(0);
+</script>
+
+</body></html>
