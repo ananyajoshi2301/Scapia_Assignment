@@ -1,4 +1,9 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Tandem Trip Planner</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -91,6 +96,9 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:60
 .foot{font-size:12px;color:var(--muted)}
 @media (prefers-reduced-motion:no-preference){.push{animation:pop .35s ease-out}@keyframes pop{from{transform:translateY(6px);opacity:.4}to{transform:none;opacity:1}}}
 </style>
+</head>
+<body>
+
 
 <div class="wrap">
   <header>
@@ -245,7 +253,7 @@ function renderReels(){
       <label class="f">Saved by<select id="reelby">${people.map(p=>`<option value="${p.id}">${p.n}</option>`).join('')}</select></label>
       <button class="btn" id="reelgo" style="align-self:flex-end">Import</button>
     </div>
-    <p class="toast" id="reeltoast" role="status">${S.toast}</p>
+    <p class="toast" id="reeltoast" role="status" style="color:var(${S.toastBad?'--bad':'--good'})">${S.toast}</p>
   </div>
   <div class="card">
     <div class="eyebrow">Vaults</div>
@@ -267,9 +275,14 @@ function renderReels(){
     </div>`).join('')}
   </div>
   <div class="row"><button class="btn" data-go="2">Next: build the plan</button></div>`;
+  document.getElementById('reelurl').value=S.lastUrl||'';
   document.getElementById('reelgo').onclick=()=>{
     const url=document.getElementById('reelurl').value.trim();
-    if(!url){S.toast='Paste a reel link first.';renderReels();return}
+    S.lastUrl=url;
+    if(!url){S.toastBad=true;S.toast='Paste a reel link first.';renderReels();return}
+    if(!/^(https?:\/\/)?(www\.)?instagram\.com\/(reel|reels|p|tv)\/[A-Za-z0-9_-]{5,}\/?(\?.*)?$/i.test(url)){
+      S.toastBad=true;S.toast='That is not an Instagram reel link. Use a link like instagram.com/reel/AbC123xyz/.';renderReels();return}
+    S.toastBad=false;S.lastUrl='';
     if(!reserve.length){S.toast='No more sample reels to import.';renderReels();return}
     const by=document.getElementById('reelby').value,pl=reserve.shift();pl.saved=[by];places.push(pl);
     S.toast=`Place read from the caption: ${pl.n}, ${pl.area}. Added to ${byId(by).n}'s saves.`;renderReels();
@@ -394,4 +407,5 @@ document.addEventListener('change',e=>{
 show(0);
 </script>
 
-</body></html>
+</body>
+</html>
